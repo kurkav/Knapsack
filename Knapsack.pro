@@ -4,19 +4,21 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    knapsackxeon.cpp \
+    solvers/knapsackxeon.cpp \
     knapsacksolver.cpp \
-    knapsackrecursive.cpp \
-    knapsack.cpp
+    solvers/knapsackrecursive.cpp \
+    solvers/knapsack.cpp \
+    solvers/knapsackxeon.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
 
 HEADERS += \
-    knapsackxeon.h \
+    solvers/knapsackxeon.h \
     knapsacksolver.h \
-    knapsackrecursive.h \
-    knapsack.h
+    solvers/knapsackrecursive.h \
+    solvers/knapsack.h \
+    solvers/knapsackxeon.h
 
 OTHER_FILES += \
     README.md
