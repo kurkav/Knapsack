@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
-#include "knapsack.h"
+#include "solvers/knapsack.h"
 
 class KnapsackXeon : public Knapsack{
 private:

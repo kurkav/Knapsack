@@ -3,14 +3,16 @@
 KnapsackSolver::KnapsackSolver()
 {
     FLengthFixed = 0;
+    FLength = 0;
     FInserted = NULL;
     FItemWeight = NULL;
     FItemCost = NULL;
     FInsertedBest = NULL;
+    FBestCost = 0;
 }
 
 void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFixed){
-    if(FLength != Length && FLengthFixed != LengthFixed)return;
+    if(FLength == Length && FLengthFixed == LengthFixed)return;
     FLength = Length;
     FLengthFixed = LengthFixed;
 
@@ -38,6 +40,7 @@ void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFix
 }
 
 void KnapsackSolver::PrepareTestProblem(int Problem){
+    FBestCost = 0;
     switch(Problem){
         case 0:{
             PrepareVariables(22,0);
@@ -65,44 +68,67 @@ void KnapsackSolver::PrepareTestProblem(int Problem){
             FWeightLimit = 200;
             break;
         }
-        default:{
-            PrepareVariables(7,0);
-            //FLength = 7;
-            unsigned int defaultC[] = {12,10,8,11,14,7,9};
-            unsigned int defaultW[] = {4,6,5,7,3,1,6};
-            for(unsigned int i = 0; i < FLength; i++){
-                FItemCost[i] = defaultC[i];
-                FItemWeight[i] = defaultW[i];
-            }
+    default:{
+        Problem = (Problem > -Problem)? Problem: -Problem;
+        Problem = (Problem < PROBLEM_LIMIT)? Problem:PROBLEM_LIMIT;
+        Problem = (Problem > 10)? Problem:10;
+        PrepareVariables(Problem,3);
+        FWeightLimit = 0;
+        FExpectedCost = 0;
+        for(unsigned int i = 0; i < FLength; i++){
+            FItemCost[i] = rand() % 10;
+            FItemWeight[i] = rand()% 10;
 
-            FExpectedCost = 44;
-            FWeightLimit = 18;
+            FExpectedCost += FItemCost[i];
+            FWeightLimit += FItemWeight[i];
+        }
+        FExpectedCost = FExpectedCost*0.6666;
+        FWeightLimit = FWeightLimit*0.6666;
         }
     }
 }
 
 void KnapsackSolver::Solve(SolverType Type){
     Knapsack *knapsack;
-
+    bool omp = false;
     int steps = pow(2,FLengthFixed);
     switch(Type){
         case DYNAMIC:
             knapsack = new KnapsackXeon();
             break;
-        case RECURSIVE:
-            knapsack = new KnapsackRecursive();
-            break;
+    case RECURSIVE:
+        knapsack = new KnapsackRecursive();
+        break;
+    case OMPRECURSIVE:
+        knapsack = new KnapsackRecursive();
+        omp = true;
+        break;
     }
     knapsack->SetupProblem(FLength,FLengthFixed,FWeightLimit,FItemWeight,FItemCost);
     int SolutionCost;
 
-    for(int i = 0; i < steps;i++){
-        SolutionCost = knapsack->Solve(FInserted[i]);
-        if(SolutionCost > FBestCost){
-            FBestCost = SolutionCost;
-            memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+    if(omp){
+
+        #pragma omp parallel num_threads(6)
+        {
+        #pragma omp for
+        for(int i = 0; i < steps;i++){
+            SolutionCost = knapsack->Solve(FInserted[i]);
+            if(SolutionCost > FBestCost){
+                FBestCost = SolutionCost;
+                memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+            }
         }
-    }
+        }
+    }else{
+        for(int i = 0; i < steps;i++){
+            SolutionCost = knapsack->Solve(FInserted[i]);
+            if(SolutionCost > FBestCost){
+                FBestCost = SolutionCost;
+                memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+            }
+        }
+     }
 
 
 }
@@ -124,7 +150,7 @@ void KnapsackSolver::PrintResult(){
         }
     }
     //cout << endl;
-
+FBestCost = price;
     printf("FoundPrice %d \t expected %d\n",FBestCost ,FExpectedCost);
     printf("FoundWeight %d\t maximaly %d\n",weight,FWeightLimit);
     if(FBestCost == FExpectedCost && weight < FWeightLimit){

@@ -1,10 +1,13 @@
 #ifndef KNAPSACKSOLVER_H
 #define KNAPSACKSOLVER_H
-#include "knapsack.h"
-#include "knapsackxeon.h"
-#include "knapsackrecursive.h"
+#include "solvers/knapsack.h"
+#include "solvers/knapsackxeon.h"
+#include "solvers/knapsackrecursive.h"
 #include <math.h>
-enum SolverType {RECURSIVE, DYNAMIC};
+#include <stdlib.h> /* srand, rand */
+
+#define PROBLEM_LIMIT 1000
+enum SolverType {RECURSIVE, DYNAMIC, OMPRECURSIVE};
 
 class KnapsackSolver{
 private:

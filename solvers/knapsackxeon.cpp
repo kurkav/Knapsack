@@ -1,4 +1,4 @@
-#include "knapsackxeon.h"
+#include "solvers/knapsackxeon.h"
 //--------------------------------------------------------------------------------------------------------------------------------
 KnapsackXeon::KnapsackXeon()
 {
