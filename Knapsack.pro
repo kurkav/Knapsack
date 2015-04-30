@@ -18,3 +18,6 @@ HEADERS += \
     knapsackrecursive.h \
     knapsack.h
 
+OTHER_FILES += \
+    README.md
+
