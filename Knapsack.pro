@@ -22,5 +22,6 @@ HEADERS += \
     solvers/knapsack.h \
 
 OTHER_FILES += \
-    README.md
+    README.md \
+    Makefile
 
