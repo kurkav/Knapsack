@@ -9,6 +9,7 @@ KnapsackSolver::KnapsackSolver()
     FItemCost = NULL;
     FInsertedBest = NULL;
     FBestCost = 0;
+    FSolverCount = 4;
 }
 
 void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFixed){
@@ -36,11 +37,25 @@ void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFix
     FInserted = new bool*[Steps];
     for(int i = 0; i < Steps; i++){
         FInserted[i] = new bool[FLength];
+        int I = i;
+        for(int j = FLengthFixed-1; j >=0;j--){
+            FInserted[i][j] =  (I&1);
+            I = I>>1;
+        }
+       /*
+        for(int j = 0; j < FLengthFixed; j++){
+            std::cout << FInserted[i][j];
+        }
+        std::cout<<std::endl;
+        */
     }
+
+
 }
 
+
+
 void KnapsackSolver::PrepareTestProblem(int Problem){
-    FBestCost = 0;
     switch(Problem){
         case 0:{
             PrepareVariables(22,0);
@@ -89,41 +104,63 @@ void KnapsackSolver::PrepareTestProblem(int Problem){
 }
 
 void KnapsackSolver::Solve(SolverType Type){
-    Knapsack *knapsack;
+    FBestCost = 0;
+    Knapsack **knapsack = new Knapsack*[FSolverCount];
     bool omp = false;
     int steps = pow(2,FLengthFixed);
+    for(unsigned int i = 0; i < FSolverCount; i++){
     switch(Type){
-        case DYNAMIC:
-            knapsack = new KnapsackXeon();
+        case DYNAMIC:            
+            knapsack[i] = new KnapsackXeon();
             break;
-    case RECURSIVE:
-        knapsack = new KnapsackRecursive();
-        break;
-    case OMPRECURSIVE:
-        knapsack = new KnapsackRecursive();
-        omp = true;
-        break;
+        case OMPRECURSIVE:
+            omp = true;
+        case RECURSIVE:
+            knapsack[i] = new KnapsackRecursive();
+            break;
+        }
+        knapsack[i]->SetupProblem(FLength,FLengthFixed,FWeightLimit,FItemWeight,FItemCost);
+        knapsack[i]->ID = i;
     }
-    knapsack->SetupProblem(FLength,FLengthFixed,FWeightLimit,FItemWeight,FItemCost);
+
     int SolutionCost;
 
     if(omp){
 
-        #pragma omp parallel num_threads(6)
+        #pragma omp parallel num_threads(4)
         {
         #pragma omp for
-        for(int i = 0; i < steps;i++){
-            SolutionCost = knapsack->Solve(FInserted[i]);
-            if(SolutionCost > FBestCost){
-                FBestCost = SolutionCost;
-                memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+            for(int i = 0; i < steps;i++){
+                Knapsack * sack = NULL;
+                #pragma omp critical
+                {
+                    while(sack == NULL)
+                    for(int s = 0; s < FSolverCount; s++){
+                        if(knapsack[s]->Available){
+                            knapsack[s]->Available = false;
+                            sack = knapsack[s];
+                            break;
+                        }
+                    }
+                }
+                SolutionCost = sack->Solve(FInserted[i]);
+                #pragma omp critical
+                {
+                    //we want only one updating of best solution at a time
+                    if(SolutionCost > FBestCost){
+                        std::cout << "omp, new solution: "<< SolutionCost << std::endl;
+                        FBestCost = SolutionCost;
+                        memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+                    }
+                    sack->Available = true;
+                }
             }
-        }
         }
     }else{
         for(int i = 0; i < steps;i++){
-            SolutionCost = knapsack->Solve(FInserted[i]);
+            SolutionCost = knapsack[0]->Solve(FInserted[i]);
             if(SolutionCost > FBestCost){
+                std::cout << "new solution: "<< SolutionCost << std::endl;
                 FBestCost = SolutionCost;
                 memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
             }

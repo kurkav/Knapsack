@@ -21,7 +21,7 @@ private:
     unsigned int FCost;
     unsigned int FBestCost;
     unsigned int FWorkerCount;
-
+    unsigned int FSolverCount;
     unsigned int FExpectedCost;
 
     bool **FInserted;

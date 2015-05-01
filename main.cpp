@@ -22,7 +22,7 @@ void End(string s){
 
 int main(){
     KnapsackSolver *solver = new KnapsackSolver();
-    solver->PrepareTestProblem(32);
+    solver->PrepareTestProblem(30);
     Start();
     solver->Solve(RECURSIVE);
     End("Recursive solver");

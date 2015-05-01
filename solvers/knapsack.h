@@ -6,6 +6,8 @@
 
 class Knapsack{
 public:
+    int ID;
+    bool Available;
     Knapsack();
     ~Knapsack();
     /*

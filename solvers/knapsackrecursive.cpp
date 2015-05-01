@@ -44,7 +44,13 @@ void KnapsackRecursive::goDeeper(unsigned int pos,unsigned int weight,unsigned i
 //--------------------------------------------------------------------------------------------------------------------------------
 int KnapsackRecursive::Solve(bool * Inserted){
     FBestCost = 0;
-    memset(FInserted, 0, sizeof(bool)*FLength);
+    for(int i = 0; i < FLengthFixed;i++){
+        FInserted[i] = Inserted[i];
+    }
+    for(int i = FLengthFixed; i<FLength;i++){
+        Inserted[i]= false;
+        FInserted[i] = false;
+    }
     FInsertedBest = Inserted;
     FCost = 0;
     unsigned int weight = 0;
@@ -60,5 +66,19 @@ int KnapsackRecursive::Solve(bool * Inserted){
     }
 
     goDeeper(FLengthFixed,weight,cost);
+
+    int sol = 0,w = 0;
+    for(unsigned int i = 0; i < FLength;i++){
+        if(FLengthFixed == i){
+            std::cout << "-";
+        }
+        std::cout << (Inserted[i])?"1":"0";
+
+        if(Inserted[i]){
+            sol += FItemCost[i];
+            w += FItemWeight[i];
+        }
+    }
+    std::cout << std::endl<< ID<<":_rec sol/weight: " << sol << "/" << w <<std::endl<<std::endl;
     return FBestCost;
 }
