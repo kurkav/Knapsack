@@ -87,7 +87,7 @@ void KnapsackSolver::PrepareTestProblem(int Problem){
         Problem = (Problem > -Problem)? Problem: -Problem;
         Problem = (Problem < PROBLEM_LIMIT)? Problem:PROBLEM_LIMIT;
         Problem = (Problem > 10)? Problem:10;
-        PrepareVariables(Problem,3);
+        PrepareVariables(Problem,4);
         FWeightLimit = 0;
         FExpectedCost = 0;
         for(unsigned int i = 0; i < FLength; i++){
@@ -104,13 +104,19 @@ void KnapsackSolver::PrepareTestProblem(int Problem){
 }
 
 void KnapsackSolver::Solve(SolverType Type){
+    if(FBestCost != 0){
+        //compare with previous solution
+        FExpectedCost = FBestCost;
+    }
     FBestCost = 0;
     Knapsack **knapsack = new Knapsack*[FSolverCount];
     bool omp = false;
     int steps = pow(2,FLengthFixed);
     for(unsigned int i = 0; i < FSolverCount; i++){
     switch(Type){
-        case DYNAMIC:            
+        case OMPDYNAMIC:
+            omp = true;
+        case DYNAMIC:
             knapsack[i] = new KnapsackXeon();
             break;
         case OMPRECURSIVE:
@@ -126,7 +132,6 @@ void KnapsackSolver::Solve(SolverType Type){
     int SolutionCost;
 
     if(omp){
-
         #pragma omp parallel num_threads(4)
         {
         #pragma omp for
@@ -135,7 +140,7 @@ void KnapsackSolver::Solve(SolverType Type){
                 #pragma omp critical
                 {
                     while(sack == NULL)
-                    for(int s = 0; s < FSolverCount; s++){
+                    for(unsigned int s = 0; s < FSolverCount; s++){
                         if(knapsack[s]->Available){
                             knapsack[s]->Available = false;
                             sack = knapsack[s];
@@ -149,11 +154,19 @@ void KnapsackSolver::Solve(SolverType Type){
                     //we want only one updating of best solution at a time
                     if(SolutionCost > FBestCost){
                         std::cout << "omp, new solution: "<< SolutionCost << std::endl;
+
                         FBestCost = SolutionCost;
                         memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+                        for(unsigned int i = 0; i < FLength; i++){
+                            if(FLengthFixed == i){
+                                std::cout << "-";
+                            }
+                            std::cout << (FInsertedBest[i])?"1":"0";
+                        }
+                        std::cout<<std::endl;
                     }
-                    sack->Available = true;
                 }
+                sack->Available = true;
             }
         }
     }else{
@@ -163,6 +176,13 @@ void KnapsackSolver::Solve(SolverType Type){
                 std::cout << "new solution: "<< SolutionCost << std::endl;
                 FBestCost = SolutionCost;
                 memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
+                for(unsigned int i = 0; i < FLength; i++){
+                    if(FLengthFixed == i){
+                        std::cout << "-";
+                    }
+                    std::cout << (FInsertedBest[i])?"1":"0";
+                }
+                std::cout<<std::endl;
             }
         }
      }
@@ -188,11 +208,23 @@ void KnapsackSolver::PrintResult(){
     }
     //cout << endl;
 FBestCost = price;
-    printf("FoundPrice %d \t expected %d\n",FBestCost ,FExpectedCost);
+    printf("FoundPrice %d \t expected %d\n",price ,FExpectedCost);
     printf("FoundWeight %d\t maximaly %d\n",weight,FWeightLimit);
-    if(FBestCost == FExpectedCost && weight < FWeightLimit){
+    if(FBestCost == FExpectedCost && weight <= FWeightLimit){
         printf("Correct Solution\n");
     }else{
         printf("Incorrect Solution\n");
     }
+}
+
+
+void KnapsackSolver::PrintProblem(){
+    for(int i = 0; i < FLength; i++){
+        std::cout << FItemCost[i] << " ";
+    }
+    std::cout<<std::endl;
+    for(int i = 0; i < FLength; i++){
+        std::cout << FItemWeight[i] << " ";
+    }
+    std::cout<<std::endl;
 }

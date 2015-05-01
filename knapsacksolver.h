@@ -7,7 +7,7 @@
 #include <stdlib.h> /* srand, rand */
 
 #define PROBLEM_LIMIT 1000
-enum SolverType {RECURSIVE, DYNAMIC, OMPRECURSIVE};
+enum SolverType {RECURSIVE, DYNAMIC, OMPDYNAMIC, OMPRECURSIVE};
 
 class KnapsackSolver{
 private:
@@ -32,6 +32,7 @@ public:
     KnapsackSolver();
     void PrepareTestProblem(int i);
     void Solve(SolverType Type);
+    void PrintProblem();
     void PrintResult();
 };
 

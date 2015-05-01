@@ -64,7 +64,7 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
         }
     }
 
-#if 1
+#if 0
     for(int l = 0; l <= Count; l++){
          for(unsigned int j = 0; j <= WeightLimit; j++){
              printf("%d\t", table[l][j]);
@@ -104,5 +104,14 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
 
 int KnapsackXeon::Solve(bool * Inserted){
     KnapsackDynamic(Inserted);
-    return 0;
+    unsigned int value = 0;
+    for(unsigned int i = 0; i < FLength; i++){
+        //std::cout << (Inserted[i])?"1":"0";
+
+        if(Inserted[i]){
+            value+=FItemCost[i];
+        }
+    }
+    //std::cout <<std::endl;
+    return value;
 }

@@ -22,14 +22,16 @@ void End(string s){
 
 int main(){
     KnapsackSolver *solver = new KnapsackSolver();
-    solver->PrepareTestProblem(30);
+    solver->PrepareTestProblem(100);
+    //solver->PrintProblem();
     Start();
-    solver->Solve(RECURSIVE);
+    solver->Solve(OMPRECURSIVE);
     End("Recursive solver");
     solver->PrintResult();
+
     Start();
     cout << endl<< endl;
-    solver->Solve(OMPRECURSIVE);
+    solver->Solve(OMPDYNAMIC);
     End("OMP Recursive solver");
 
     solver->PrintResult();
