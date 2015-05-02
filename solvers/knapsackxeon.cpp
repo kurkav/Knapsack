@@ -32,7 +32,7 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
     unsigned int *Weights = FItemWeight;
     unsigned int *Costs = FItemCost;
     unsigned int WeightLimit = FWeight;
-    int Count = FLength;
+    int Count = FLength-FLengthFixed;
     int **table = new int*[Count+1];
     int **used = new int*[Count+1];
     for(int i = 0; i <= Count; i++){
@@ -103,7 +103,7 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
 }
 
 int KnapsackXeon::Solve(bool * Inserted){
-    KnapsackDynamic(Inserted);
+    KnapsackDynamic(&Inserted[FLengthFixed]);
     unsigned int value = 0;
     for(unsigned int i = 0; i < FLength; i++){
         //std::cout << (Inserted[i])?"1":"0";

@@ -9,7 +9,7 @@ KnapsackSolver::KnapsackSolver()
     FItemCost = NULL;
     FInsertedBest = NULL;
     FBestCost = 0;
-    FSolverCount = 4;
+    FSolverCount = 1;
 }
 
 void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFixed){
@@ -23,7 +23,7 @@ void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFix
 
     int Steps = pow(2,FLengthFixed);
     if(FInserted != NULL) {
-        for(int i = 0; i < Steps; i++){
+        for(int i = 0; i < FSolverCount; i++){
             if(FInserted[i] != NULL){
                 delete [] FInserted[i];
             }
@@ -34,25 +34,36 @@ void KnapsackSolver::PrepareVariables(unsigned int Length,unsigned int LengthFix
     FItemCost = new unsigned int[FLength];
     FItemWeight = new unsigned int[FLength];
     FInsertedBest = new bool[FLength];
-    FInserted = new bool*[Steps];
-    for(int i = 0; i < Steps; i++){
+    FInserted = new bool*[FSolverCount];
+    for(int i = 0; i < FSolverCount; i++){
         FInserted[i] = new bool[FLength];
-        int I = i;
-        for(int j = FLengthFixed-1; j >=0;j--){
-            FInserted[i][j] =  (I&1);
-            I = I>>1;
-        }
-       /*
-        for(int j = 0; j < FLengthFixed; j++){
-            std::cout << FInserted[i][j];
-        }
-        std::cout<<std::endl;
-        */
     }
-
-
 }
 
+void KnapsackSolver::SetFixedLength(unsigned int fl){
+    if(fl > FLength-3 || fl == FLengthFixed) return;
+    FLengthFixed = fl;
+}
+
+void KnapsackSolver::SetSolverCount(unsigned int sc){
+    if(FSolverCount == sc) return;
+    //delete old
+    if(FInserted != NULL) {
+        for(int i = 0; i < FSolverCount; i++){
+            if(FInserted[i] != NULL){
+                delete [] FInserted[i];
+            }
+        }
+        delete [] FInserted;
+    }
+
+    //create new
+    FSolverCount = sc;
+    FInserted = new bool*[FSolverCount];
+    for(int i = 0; i < FSolverCount; i++){
+        FInserted[i] = new bool[FLength];
+    }
+}
 
 
 void KnapsackSolver::PrepareTestProblem(int Problem){
@@ -87,7 +98,7 @@ void KnapsackSolver::PrepareTestProblem(int Problem){
         Problem = (Problem > -Problem)? Problem: -Problem;
         Problem = (Problem < PROBLEM_LIMIT)? Problem:PROBLEM_LIMIT;
         Problem = (Problem > 10)? Problem:10;
-        PrepareVariables(Problem,4);
+        PrepareVariables(Problem,FLengthFixed);
         FWeightLimit = 0;
         FExpectedCost = 0;
         for(unsigned int i = 0; i < FLength; i++){
@@ -132,23 +143,33 @@ void KnapsackSolver::Solve(SolverType Type){
     int SolutionCost;
 
     if(omp){
-        #pragma omp parallel num_threads(4)
+        omp_set_dynamic(0);     // Explicitly disable dynamic teams
+        omp_set_num_threads(FSolverCount);
+        #pragma omp parallel
         {
         #pragma omp for
             for(int i = 0; i < steps;i++){
                 Knapsack * sack = NULL;
+                bool * inserted = NULL;
                 #pragma omp critical
-                {
+                {   //find usable solver
                     while(sack == NULL)
                     for(unsigned int s = 0; s < FSolverCount; s++){
                         if(knapsack[s]->Available){
                             knapsack[s]->Available = false;
                             sack = knapsack[s];
+                            inserted = FInserted[s];
                             break;
                         }
                     }
                 }
-                SolutionCost = sack->Solve(FInserted[i]);
+                //prepare fixed part
+                int I = i;
+                for(int j = FLengthFixed-1; j >=0;j--){
+                    inserted[j] =  (I&1);
+                    I = I>>1;
+                }
+                SolutionCost = sack->Solve(inserted);
                 #pragma omp critical
                 {
                     //we want only one updating of best solution at a time
@@ -156,12 +177,12 @@ void KnapsackSolver::Solve(SolverType Type){
                         std::cout << "omp, new solution: "<< SolutionCost << std::endl;
 
                         FBestCost = SolutionCost;
-                        memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
-                        for(unsigned int i = 0; i < FLength; i++){
-                            if(FLengthFixed == i){
+                        memcpy(FInsertedBest, inserted, FLength*sizeof(bool));
+                        for(unsigned int k = 0; k < FLength; k++){
+                            if(FLengthFixed == k){
                                 std::cout << "-";
                             }
-                            std::cout << (FInsertedBest[i])?"1":"0";
+                            std::cout << (FInsertedBest[k])?"1":"0";
                         }
                         std::cout<<std::endl;
                     }
@@ -171,27 +192,42 @@ void KnapsackSolver::Solve(SolverType Type){
         }
     }else{
         for(int i = 0; i < steps;i++){
-            SolutionCost = knapsack[0]->Solve(FInserted[i]);
+            bool * inserted = FInserted[0];
+
+            //prepare fixed part
+            int I = i;
+            for(int j = FLengthFixed-1; j >=0;j--){
+                inserted[j] =  (I&1);
+                I = I>>1;
+            }
+
+            SolutionCost = knapsack[0]->Solve(inserted);
             if(SolutionCost > FBestCost){
                 std::cout << "new solution: "<< SolutionCost << std::endl;
                 FBestCost = SolutionCost;
-                memcpy(FInsertedBest, FInserted[i], FLength*sizeof(bool));
                 for(unsigned int i = 0; i < FLength; i++){
                     if(FLengthFixed == i){
                         std::cout << "-";
                     }
-                    std::cout << (FInsertedBest[i])?"1":"0";
+                    std::cout << (inserted[i])?"1":"0";
                 }
                 std::cout<<std::endl;
+
+                memcpy(FInsertedBest, inserted, FLength*sizeof(bool));
             }
         }
      }
-
+    if(knapsack != NULL){
+        for(int i = 0; i < FSolverCount; i++){
+            if(knapsack[i] != NULL)delete knapsack[i];
+        }
+        delete [] knapsack;
+    }
 
 }
 
 void KnapsackSolver::PrintResult(){
-    //if(FInserted == NULL) return;
+    if(FInserted == NULL) return;
     if(FItemWeight == NULL) return;
     if(FItemCost == NULL) return;
 
