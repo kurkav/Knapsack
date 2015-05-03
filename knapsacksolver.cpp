@@ -128,7 +128,7 @@ void KnapsackSolver::Solve(SolverType Type){
         case OMPDYNAMIC:
             omp = true;
         case DYNAMIC:
-            knapsack[i] = new KnapsackXeon();
+            knapsack[i] = new KnapsackDynamic();
             break;
         case OMPRECURSIVE:
             omp = true;
@@ -174,10 +174,10 @@ void KnapsackSolver::Solve(SolverType Type){
                 {
                     //we want only one updating of best solution at a time
                     if(SolutionCost > FBestCost){
-                        std::cout << "omp, new solution: "<< SolutionCost << std::endl;
-
                         FBestCost = SolutionCost;
                         memcpy(FInsertedBest, inserted, FLength*sizeof(bool));
+#if DEBUG
+                        std::cout << "omp, new solution: "<< SolutionCost << std::endl;
                         for(unsigned int k = 0; k < FLength; k++){
                             if(FLengthFixed == k){
                                 std::cout << "-";
@@ -185,6 +185,7 @@ void KnapsackSolver::Solve(SolverType Type){
                             std::cout << (FInsertedBest[k])?"1":"0";
                         }
                         std::cout<<std::endl;
+#endif
                     }
                 }
                 sack->Available = true;
@@ -203,8 +204,9 @@ void KnapsackSolver::Solve(SolverType Type){
 
             SolutionCost = knapsack[0]->Solve(inserted);
             if(SolutionCost > FBestCost){
-                std::cout << "new solution: "<< SolutionCost << std::endl;
                 FBestCost = SolutionCost;
+#if DEBUG
+                std::cout << "new solution: "<< SolutionCost << std::endl;
                 for(unsigned int i = 0; i < FLength; i++){
                     if(FLengthFixed == i){
                         std::cout << "-";
@@ -212,6 +214,7 @@ void KnapsackSolver::Solve(SolverType Type){
                     std::cout << (inserted[i])?"1":"0";
                 }
                 std::cout<<std::endl;
+#endif
 
                 memcpy(FInsertedBest, inserted, FLength*sizeof(bool));
             }

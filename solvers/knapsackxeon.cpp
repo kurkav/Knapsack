@@ -1,6 +1,6 @@
 #include "knapsackxeon.h"
 //--------------------------------------------------------------------------------------------------------------------------------
-KnapsackXeon::KnapsackXeon()
+KnapsackDynamic::KnapsackDynamic()
 {
     FItemWeight = NULL;
     FItemCost = NULL;
@@ -9,23 +9,23 @@ KnapsackXeon::KnapsackXeon()
     FWeight = 0;
     FCost = 0;
 }
-KnapsackXeon::~KnapsackXeon(){}
+KnapsackDynamic::~KnapsackDynamic(){}
 //--------------------------------------------------------------------------------------------------------------------------------
-int KnapsackXeon::PrepareVariables(unsigned int Length, unsigned int LengthFixed,int Weight){
+int KnapsackDynamic::PrepareVariables(unsigned int Length, unsigned int LengthFixed,int Weight){
     FLength = Length;
     FLengthFixed = LengthFixed;
     FWeight = Weight;
     return 0;
 }
 //--------------------------------------------------------------------------------------------------------------------------------
-void KnapsackXeon::SetupProblem(unsigned int Length, unsigned int LengthFixed,int Weight, unsigned int * Weights, unsigned int * Costs){
+void KnapsackDynamic::SetupProblem(unsigned int Length, unsigned int LengthFixed,int Weight, unsigned int * Weights, unsigned int * Costs){
     FItemWeight = Weights;
     FItemCost = Costs;
 
     PrepareVariables(Length, LengthFixed, Weight);
 }
 //--------------------------------------------------------------------------------------------------------------------------------
-int KnapsackXeon::KnapsackDynamic(bool * Inserted){
+int KnapsackDynamic::Dynamic(bool * Inserted){
     FCost = 0;
     //int * N, int * Weights, int* Costs, int WeightLimit, int Count
     bool *N = Inserted;
@@ -33,16 +33,16 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
     unsigned int *Costs = FItemCost;
     unsigned int WeightLimit = FWeight;
     int Count = FLength-FLengthFixed;
-    int **table = new int*[Count+1];
-    int **used = new int*[Count+1];
+    unsigned int **table = new unsigned int*[Count+1];
+    bool **used = new bool*[Count+1];
     for(int i = 0; i <= Count; i++){
-        table[i] = new int[WeightLimit+1];
+        table[i] = new unsigned int[WeightLimit+1];
         table[i][0] = 0;
-        memset(table[i], 0, sizeof(int)*WeightLimit+1);
+        memset(table[i], 0, sizeof(unsigned int)*WeightLimit+1);
 
-        used[i] = new int[WeightLimit+1];
+        used[i] = new bool[WeightLimit+1];
         used[i][0] = 0;
-        memset(used[i], 0, sizeof(int)*WeightLimit+1);
+        memset(used[i], 0, sizeof(bool)*WeightLimit+1);
     }
     for(int i = 1; i <= Count; i++){
         for(unsigned int w = 0; w <= WeightLimit; w++){
@@ -93,8 +93,8 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
         i--;
 
     }
-    return table[Count][WeightLimit];
-    for(int i = 0; i < Count; i++){
+
+    for(int i = 0; i <= Count; i++){
         delete[] table[i];
         delete[] used[i];
     }
@@ -102,8 +102,8 @@ int KnapsackXeon::KnapsackDynamic(bool * Inserted){
     delete[] used;
 }
 
-int KnapsackXeon::Solve(bool * Inserted){
-    KnapsackDynamic(&Inserted[FLengthFixed]);
+int KnapsackDynamic::Solve(bool * Inserted){
+    Dynamic(&Inserted[FLengthFixed]);
     unsigned int value = 0;
     for(unsigned int i = 0; i < FLength; i++){
         //std::cout << (Inserted[i])?"1":"0";

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "solvers/knapsack.h"
 
-class KnapsackXeon : public Knapsack{
+class KnapsackDynamic : public Knapsack{
 private:
     unsigned int *FItemWeight;
     unsigned int *FItemCost;
@@ -16,11 +16,11 @@ private:
     int **FTableCost;
     int **FTableUsed;
 
-    int KnapsackDynamic(bool * Inserted);
+    int Dynamic(bool * Inserted);
     int PrepareVariables(unsigned int Length, unsigned int LengthFixed,int Weight);
 public:
-    KnapsackXeon();
-~KnapsackXeon();
+    KnapsackDynamic();
+~KnapsackDynamic();
     /*
      * Weights, Costs will be only read
      */

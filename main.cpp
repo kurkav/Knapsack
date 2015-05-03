@@ -24,21 +24,20 @@ void End(string s){
 
 int main(){
     KnapsackSolver *solver = new KnapsackSolver();
-    solver->PrepareTestProblem(200);
-    solver->SetFixedLength(10);
-    solver->SetSolverCount(4);
-    //solver->PrintProblem();
-    Start();    
+    solver->PrepareTestProblem(1000);
+    solver->SetFixedLength(5);
+    solver->SetSolverCount(24);
+
+
+    Start();
     solver->Solve(DYNAMIC);
-    End("Recursive solver");
-    solver->PrintResult();
+    End("Dynamic solver");
 
     Start();
     cout << endl<< endl;
     solver->Solve(OMPDYNAMIC);
-    End("OMP Recursive solver");
+    End("OMP dynamic solver");
 
-    solver->PrintResult();
     return 0;
 }
 
